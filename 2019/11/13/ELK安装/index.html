@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta name="generator" content="Hexo 3.8.0"><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="HUICONG ,642806566@qq.com"><title>ELK安装 · HuiCong's Notes</title><meta name="description" content="ELK安装部署
+1.基础信息
+环境centos7.5：
+        10.6.136.19 elk_node01 es kibana
+        10.6.136.20 elk_node02 es
+        10.6.136.21 elk_node03 es
+版本：    
+     "><meta name="keywords" content="Hexo,Linux，Java"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"></head><body><div class="sidebar animated fadeInDown"><div class="logo-title"><div class="title"><img src="/images/logo@2x.png" style="width:127px;"><h3 title><a href="/">HuiCong's Notes</a></h3><div class="description"><p>但行好事，莫问前程.</p></div></div></div><ul class="social-links"><li><a href="642806566@qq.com"><i class="fa fa-envelope"></i></a></li></ul><div class="footer"><div class="p"> <span>© 2017 - 2018 </span><i class="fa fa-star"></i><span> Core</span></div><div class="by_farbox"><a href="https://hexo.io/zh-cn/" target="_blank">Powered by Hexo. </a><a>Theme by CaiCai & Ben & Core</a></div></div></div><div class="main"><div class="page-top animated fadeInDown"><div class="nav"><li><a href="/">首页</a></li><li><a href="/archives">归档</a></li><li><a href="/about">关于</a></li><li><a href="/guestbook">留言</a></li></div><div class="information"><div class="back_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li></div></div></div><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>ELK安装</a></h3></div><div class="post-content"><h3 id="ELK安装部署"><a href="#ELK安装部署" class="headerlink" title="ELK安装部署"></a>ELK安装部署</h3><hr>
+<p>1.基础信息</p>
+<pre><code>环境centos7.5：
+        10.6.136.19 elk_node01 es kibana
+        10.6.136.20 elk_node02 es
+        10.6.136.21 elk_node03 es
+版本：    
+        es 7.4 
+        kibana 7.4
+        jdk 11
+下载：
+        组件下载：https://www.elastic.co/cn/downloads/
+        es基础版本功能介绍：https://www.elastic.co/cn/subscriptions
+        elasticsearch-7.4.2-linux-x86_64.tar.gz
+        kibana-7.4.2-linux-x86_64.tar.gz
+</code></pre><p>2.环境预配置</p>
+<pre><code>打开文件限制：
+    ulimt -n 10000
+关闭防火墙：
+    systemctl stop firewalld
+ssh免密钥登录配置
+修改主机名：
+    vi /etc/hostname
+关闭SElinux: vi /etc/selinux/config disabled
+创建elk用户：
+    useradd elk  passwd elk
+配置jdk：
+    在profile末尾添加
+    export JAVA_HOME=/data/jdk
+    export PATH=$PATH:$JAVA_HOME/bin
+    source /etc/profile
+</code></pre><p> 3.安装</p>
+<pre><code>1.解压文件到指定目录tar -zxvf [tar.gz] -C [patj]
+2.文件修改所属用户 chown -R elk:elk elasticsearch-7.4.2/
+3.添加配置
+    /etc/sysctl.conf 添加 vm.max_map_count=262144  重启机器
+    sysctl -a | grep vm.max_map_count 查看 
+    /etc/security/limits.conf 添加 注意一定在最后一行之前
+      * soft memlock unlimited
+      * hard memlock unlimited
+      * soft nofile 65536
+      * hard nofile 65536
+4.修改jvm.options配置文件中的
+      -XX:+UseG1GC
+      -XX:CMSInitiatingOccupancyFraction=75
+      -XX:+UseCMSInitiatingOccupancyOnly
+5.修改配置文件elasticsearch.yml
+      cluster.name: es-cluster
+    #------------------------------------ Node ---
+    #注意：每个节点的名字（node.name）不要相同
+    node.name: elk_node01
+    node.master: true
+    node.data: true
+    #----------------------------------- Paths ---
+    path.data: /opt/elasticsearch/elasticsearch-7.4.0/data （默认配置）
+    path.logs: /opt/elasticsearch/elasticsearch-7.4.0/logs （默认配置）
+    # -------------------------- Memory ------------------------------
+    bootstrap.memory_lock: true
+    #---------------------------------- Network ---
+    network.host: 0.0.0.0
+    http.port: 9200
+    #--------------------------------- Discovery ---
+    discovery.seed_hosts: [&quot;10.6.136.19&quot;,&quot;10.6.136.20&quot;, &quot;10.6.136.21&quot;]
+    cluster.initial_master_nodes: [&quot;elk_node01&quot;, &quot;elk_node02&quot;,&quot;elk_node03&quot;]
+    ##discovery.zen.ping.unicast.hosts: [&quot;10.6.136.19 &quot;, &quot;10.6.136.20 &quot;,&quot;10.6.136.21 &quot;]
+    # ---------------------------------- Gateway ------
+    ##discovery.zen.minimum_master_nodes: 2 （可以不修改）
+
+
+6.启动es su elk -c &quot;/data/elasticsearch-7.4.2/bin/elasticsearch -d&quot;    
+7.启动kibana nohup ../bin/kibana --allow-root &amp;
+    server.port: 5601
+    server.host: 0.0.0.0
+    elasticsearch.hosts: [&quot;http://10.6.136.19:9200&quot;]
+</code></pre></div><div class="post-footer"><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2019-11-13</span><i class="fa fa-tag"></i></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="javascript:(function(){EN_CLIP_HOST='http://www.evernote.com';try{var%20x=document.createElement('SCRIPT');x.type='text/javascript';x.src=EN_CLIP_HOST+'/public/bookmarkClipper.js?'+(new%20Date().getTime()/100000);document.getElementsByTagName('head')[0].appendChild(x);}catch(e){location.href=EN_CLIP_HOST+'/clip.action?url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title);}})();" ref="nofollow" target="_blank"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" href="http://twitter.com/home?status=,http://yoursite.com/2019/11/13/ELK安装/,HuiCong's Notes,ELK安装,;"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2019/11/14/Jmeter/" title="Jmeter简单使用">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2019/03/07/机器学习基本概念/" title="机器学习基本概念">下一篇</a></li></ul></div></div></div></div></div><script src="/js/jquery.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/assets/tororo.model.json"},"display":{"position":"left","width":100,"height":200},"mobile":{"show":false},"log":false});</script></body></html>

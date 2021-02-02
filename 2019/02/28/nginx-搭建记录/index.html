@@ -31,10 +31,10 @@
         10.6.136.32
     .下载解压:keepalived-2.0.19.tar.gz
     .编译安装到指定目录：./configure --prefix=/usr/local/keepalived &amp;&amp; make &amp;&amp; make install    
-    .cp /usr/local/keepalived/etc/init.d/keepalived /etc/init.d/
+    .cp /usr/local/keepalived/etc/init.d/keepalived /etc/init.d/ （或者安装目录下的/data/keepalived-2.0.20/keepalived/etc/init.d）
     .mkdir /etc/keepalived
     .cp /usr/local/keepalived/etc/keepalived/keepalived.conf /etc/keepalived/
-    .cp /usr/local/keepalived/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
+    .cp /usr/local/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
     .cp /usr/local/keepalived/sbin/keepalived /usr/sbin/
     .systemctl enable keepalived 开启自启动
     .systemctl start keepalived or 去sbin目录下启动
